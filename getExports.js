@@ -16,6 +16,14 @@ function ExportMap(settings) {
   this.named = new Set()
 
   this.errors = []
+
+  if (settings['import.interop']) {
+    try {
+      this.interop = require('./interop/' + settings['import.interop'])
+    } catch (err) {
+      // ignore?
+    }
+  }
 }
 
 ExportMap.get = function (source, context) {
@@ -61,7 +69,21 @@ ExportMap.parse = function (path, settings) {
   return m
 }
 
+
+
 ExportMap.prototype.captureDefault = function (n) {
+  if (this.hasDefault) return // don't need to check anymore
+
+  // todo: abstract away
+  if (this.interop && this.interop.captureDefault) {
+
+    if (this.interop.captureDefault(n)) {
+      this.hasDefault = true
+
+      return
+    }
+  }
+
   if (n.type !== 'ExportDefaultDeclaration') return
 
   this.hasDefault = true
